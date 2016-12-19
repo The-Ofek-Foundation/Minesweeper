@@ -13,6 +13,14 @@ var flagImage = getElemId('flag');
 function pageReady() {
 	resizeBoard();
 	newGame();
+
+	setTimeout(function() {
+		var explainSettings = getSessionData('settingsExplainedMinesweeper');
+		if (!explainSettings) {
+			alert("Remember that Ctrl + Click places down a flag!");
+			setSessionData('settingsExplainedMinesweeper', true);
+		}
+	}, 100);
 }
 
 function onResize() {
