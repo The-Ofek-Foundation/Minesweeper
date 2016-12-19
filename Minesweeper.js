@@ -1,8 +1,8 @@
 var docWidth, docHeight;
 var boardWidth, boardHeight, squareWidth;
 var board, visiboard;
-var dimensions = [20, 10];
-var mineFrequency = 0.1;
+var dimensions;
+var mineFrequency;
 var gameOver, gameStarted;
 
 var boardui = getElemId('board');
@@ -11,8 +11,8 @@ var mineImage = getElemId('mine');
 var flagImage = getElemId('flag');
 
 function pageReady() {
-	resizeBoard();
 	newGame();
+	setTimeout(resizeGameSettingsTable, 0);
 
 	setTimeout(function() {
 		var explainSettings = getSessionData('settingsExplainedMinesweeper');
@@ -51,9 +51,19 @@ function resizeBoard() {
 function newGame() {
 	gameOver = false;
 	gameStarted = false;
+
+	getSettings();
+	populateSettingsForm(gameSettings.getSettings());
+	resizeBoard();
+
 	generateBoard(dimensions[0], dimensions[1]);
 
 	drawBoard();
+}
+
+function getSettings() {
+	dimensions = gameSettings.getOrSet('dimensions', [20, 10]);
+	mineFrequency = gameSettings.getOrSet('mineFrequency', 0.1);
 }
 
 function clearBoard() {
@@ -114,6 +124,56 @@ function drawBoard() {
 	drawGrid();
 }
 
+function forcedMines(x, y) {
+	var adjacentMines = visiboard[x][y];
+	if (adjacentMines > 0) {
+		var adjacentUnkown = countAdjacentItems(visiboard, x, y, -2);
+		var adjacentFlags = countAdjacentItems(visiboard, x, y, -3);
+		if (adjacentMines - adjacentFlags === adjacentUnkown && adjacentUnkown > 0)
+			return true;
+	}
+	return false;
+}
+
+function forcedReveal(x, y) {
+	var adjacentMines = visiboard[x][y];
+	if (adjacentMines > 0) {
+		var adjacentUnkown = countAdjacentItems(visiboard, x, y, -2);
+		var adjacentFlags = countAdjacentItems(visiboard, x, y, -3);
+		if (adjacentMines === adjacentFlags && adjacentUnkown > 0)
+			return true;
+	}
+	return false;
+}
+
+function flagForcedMines() {
+	for (var i = 0; i < visiboard.length; i++)
+		for (var a = 0; a < visiboard.length; a++)
+			if (forcedMines(i, a))
+				flagAdjacentUnknown(i, a);
+}
+
+function revealForcedReveals() {
+	for (var i = 0; i < visiboard.length; i++)
+		for (var a = 0; a < visiboard.length; a++)
+			if (forcedReveal(i, a))
+				revealAdjacentUnknown(i, a);
+}
+
+function flagAdjacentUnknown(x, y) {
+	for (var i = x > 0 ? x - 1:x; i < visiboard.length && i <= x + 1; i++)
+		for (var a = y > 0 ? y - 1:y; a < visiboard[i].length && a <= y + 1; a++)
+			if (visiboard[i][a] === -2)
+				visiboard[i][a] = -3;
+}
+
+function revealAdjacentUnknown(x, y) {
+	for (var i = x > 0 ? x - 1:x; i < visiboard.length && i <= x + 1; i++)
+		for (var a = y > 0 ? y - 1:y; a < visiboard[i].length && a <= y + 1; a++)
+			if (visiboard[i][a] === -2)
+				revealSquare(i, a);
+}
+
 function generateBoard(width, height) {
 	board = new Array(width);
 	visiboard = new Array(width);
@@ -131,17 +191,17 @@ function generateBoard(width, height) {
 	for (var i = 0; i < width; i++)
 		for (var a = 0; a < height; a++)
 			if (board[i][a] === 0)
-				board[i][a] = countAdjacentMines(board, i, a);
+				board[i][a] = countAdjacentItems(board, i, a, -1);
 }
 
-function countAdjacentMines(board, x, y) {
-	var numMines = 0;
+function countAdjacentItems(board, x, y, item) {
+	var numItems = 0;
 
 	for (var i = x > 0 ? x - 1:x; i < board.length && i <= x + 1; i++)
 		for (var a = y > 0 ? y - 1:y; a < board[i].length && a <= y + 1; a++)
-			if (board[i][a] === -1)
-				numMines++;
-	return numMines;
+			if (board[i][a] === item)
+				numItems++;
+	return numItems;
 }
 
 function revealAdjacentSquares(x, y) {
@@ -223,7 +283,7 @@ boardui.addEventListener('mousedown', function (e) {
 document.addEventListener('keypress', function (event) {
 	switch (event.which) {
 		case 115: case 83: // s
-			// showSettingsForm();
+			showSettingsForm();
 			break;
 		case 110: case 78: // n
 			newGame();
@@ -234,3 +294,41 @@ document.addEventListener('keypress', function (event) {
 getElemId('new-game-button').addEventListener('click', function () {
 	newGame();
 });
+
+getElemId('settings-button').addEventListener('click', function () {
+	showSettingsForm();
+});
+
+getElemId('done').addEventListener('click', function (event) {
+	var settings = getNewSettings();
+	gameSettings.setSettings(settings);
+	hideSettingsForm();
+	newGame();
+});
+
+getElemId('cancel').addEventListener('click', function (event) {
+	hideSettingsForm();
+	populateSettingsForm(gameSettings.getSettings());
+});
+
+if (getElemId('save'))
+	getElemId('save').addEventListener('click', function (event) {
+		var settings = getNewSettings();
+		gameSettings.setSettings(settings);
+		gameSettings.saveSettings(settings);
+		hideSettingsForm();
+		newGame();
+	});
+
+function getNewSettings() {
+	return {
+		'dimensions': [getInputValue('board-width'), getInputValue('board-height')],
+		'mineFrequency': getInputValue('mine-frequency'),
+	}
+}
+
+function populateSettingsForm(settings) {
+	setInputValue('board-width', dimensions[0]);
+	setInputValue('board-height', dimensions[1]);
+	setInputValue('mine-frequency', mineFrequency);
+}
