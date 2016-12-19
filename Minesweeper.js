@@ -3,7 +3,7 @@ var boardWidth, boardHeight, squareWidth;
 var board, visiboard;
 var dimensions = [20, 10];
 var mineFrequency = 0.1;
-var gameOver = false;
+var gameOver, gameStarted;
 
 var boardui = getElemId('board');
 var brush = boardui.getContext("2d");
@@ -42,6 +42,7 @@ function resizeBoard() {
 
 function newGame() {
 	gameOver = false;
+	gameStarted = false;
 	generateBoard(dimensions[0], dimensions[1]);
 
 	drawBoard();
@@ -189,6 +190,11 @@ boardui.addEventListener('mousedown', function (e) {
 		return;
 	var move = getMove(e.pageX - boardui.offsetLeft,
 		e.pageY - wrapperTop - boardui.offsetTop);
+	if (!gameStarted) {
+		while (board[move[0]][move[1]] !== 0)
+			generateBoard(dimensions[0], dimensions[1]);
+		gameStarted = true;
+	}
 	if (visiboard[move[0]][move[1]] === -2) {
 		if (e.ctrlKey)
 			visiboard[move[0]][move[1]] = -3;
