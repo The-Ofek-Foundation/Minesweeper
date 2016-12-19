@@ -280,6 +280,7 @@ boardui.addEventListener('mousedown', function (e) {
 	}
 });
 
+var helpNum = 0;
 document.addEventListener('keypress', function (event) {
 	switch (event.which) {
 		case 115: case 83: // s
@@ -287,6 +288,11 @@ document.addEventListener('keypress', function (event) {
 			break;
 		case 110: case 78: // n
 			newGame();
+			break;
+		case 104: case 72: // h
+			helpNum % 2 === 0 ? flagForcedMines():revealForcedReveals();
+			helpNum++;
+			drawBoard();
 			break;
 	}
 });
