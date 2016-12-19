@@ -196,6 +196,7 @@ boardui.addEventListener('mousemove', function (e) {
 boardui.addEventListener('mousedown', function (e) {
 	if (e.which === 3)
 		return;
+	e.preventDefault();
 	var move = getMove(e.pageX - boardui.offsetLeft,
 		e.pageY - wrapperTop - boardui.offsetTop);
 	if (!gameStarted) {
