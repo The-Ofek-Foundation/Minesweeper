@@ -162,7 +162,7 @@ function getMove(xloc, yloc) {
 function gameWon() {
 	for (var i = 0; i < board.length; i++)
 		for (var a = 0; a < board[i].length; a++)
-			if (visiboard[i][a] === -3 && board[i][a] === -1) continue;
+			if (board[i][a] === -1) continue;
 			else if (visiboard[i][a] !== board[i][a])
 				return false;
 	return true;
