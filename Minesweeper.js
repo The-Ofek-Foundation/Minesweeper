@@ -229,3 +229,7 @@ document.addEventListener('keypress', function (event) {
 			break;
 	}
 });
+
+getElemId('new-game-button').addEventListener('click', function () {
+	newGame();
+});
