@@ -41,6 +41,7 @@ function resizeBoard() {
 }
 
 function newGame() {
+	gameOver = false;
 	generateBoard(dimensions[0], dimensions[1]);
 
 	drawBoard();
