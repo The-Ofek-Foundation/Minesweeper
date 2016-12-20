@@ -9,6 +9,7 @@ var boardui = getElemId('board');
 var brush = boardui.getContext("2d");
 var mineImage = getElemId('mine');
 var flagImage = getElemId('flag');
+var questionMarkImage = getElemId('question-mark');
 
 function pageReady() {
 	newGame();
@@ -94,6 +95,9 @@ function drawSquare(item, i, a) {
 			squareWidth, squareWidth);
 	else if (item === -3) // flag
 		brush.drawImage(flagImage, 1 + i * squareWidth, 1 + a * squareWidth,
+			squareWidth, squareWidth);
+	else if (item === -4) // flag
+		brush.drawImage(questionMarkImage, 1 + i * squareWidth, 1 + a * squareWidth,
 			squareWidth, squareWidth);
 	else if (item === -2) { // unknown
 		brush.fillStyle = 'gray';
@@ -267,8 +271,11 @@ boardui.addEventListener('mousedown', function (e) {
 	if (visiboard[move[0]][move[1]] === -2) {
 		if (e.ctrlKey)
 			visiboard[move[0]][move[1]] = -3;
+		else if (e.shiftKey)
+			visiboard[move[0]][move[1]] = -4;
 		else revealSquare(move[0], move[1]);
-	} else if (visiboard[move[0]][move[1]] === -3 && e.ctrlKey)
+	} else if (visiboard[move[0]][move[1]] === -3 && e.ctrlKey ||
+		visiboard[move[0]][move[1]] === -4 && e.shiftKey)
 		visiboard[move[0]][move[1]] = -2;
 	drawBoard();
 	if (!gameOver && gameWon()) {
