@@ -264,7 +264,10 @@ function revealAdjacentSquares(x, y) {
 function revealSquare(x, y) {
 	if (board[x][y] === -1) {
 		alert('Game Over!');
-		visiboard = board;
+		for (var i = 0; i < board.length; i++)
+			for (var a = 0; a < board[i].length; a++)
+				if (board[i][a] === -1)
+					visiboard[i][a] = -1;
 		gameOver = true;
 		return;
 	}
