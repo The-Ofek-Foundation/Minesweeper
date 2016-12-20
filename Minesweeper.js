@@ -3,6 +3,8 @@ var boardWidth, boardHeight, squareWidth;
 var board, visiboard;
 var dimensions;
 var mineFrequency;
+var difficulty;
+var guessingRequired;
 var gameOver, gameStarted;
 
 var boardui = getElemId('board');
@@ -25,6 +27,7 @@ function pageReady() {
 }
 
 function onResize() {
+	resizeGameSettingsTable();
 	resizeBoard();
 	drawBoard();
 }
@@ -55,14 +58,17 @@ function newGame() {
 
 	getSettings();
 	populateSettingsForm(gameSettings.getSettings());
+	gameSettings.setSettings(getNewSettings());
+	getSettings();
+
 	resizeBoard();
 
 	generateBoard(dimensions[0], dimensions[1]);
-
 	drawBoard();
 }
 
 function getSettings() {
+	difficulty = gameSettings.getOrSet('difficulty', 'normal');
 	dimensions = gameSettings.getOrSet('dimensions', [20, 10]);
 	mineFrequency = gameSettings.getOrSet('mineFrequency', 0.1);
 }
@@ -151,17 +157,25 @@ function forcedReveal(x, y) {
 }
 
 function flagForcedMines() {
+	var somethingChanged = false;
 	for (var i = 0; i < visiboard.length; i++)
 		for (var a = 0; a < visiboard.length; a++)
-			if (forcedMines(i, a))
+			if (forcedMines(i, a)) {
 				flagAdjacentUnknown(i, a);
+				somethingChanged = true;
+			}
+	return somethingChanged;
 }
 
 function revealForcedReveals() {
+	var somethingChanged = false;
 	for (var i = 0; i < visiboard.length; i++)
 		for (var a = 0; a < visiboard.length; a++)
-			if (forcedReveal(i, a))
+			if (forcedReveal(i, a)) {
 				revealAdjacentUnknown(i, a);
+				somethingChanged = true;
+			}
+	return somethingChanged;
 }
 
 function flagAdjacentUnknown(x, y) {
@@ -176,6 +190,36 @@ function revealAdjacentUnknown(x, y) {
 		for (var a = y > 0 ? y - 1:y; a < visiboard[i].length && a <= y + 1; a++)
 			if (visiboard[i][a] === -2)
 				revealSquare(i, a);
+}
+
+function revealAllForced() {
+	var somethingChanged = true;
+	while (somethingChanged) {
+		somethingChanged = false;
+		if (flagForcedMines())
+			somethingChanged = true;
+		if (revealForcedReveals())
+			somethingChanged = true;
+	}
+}
+
+function generateValidBoard(width, height, x, y) {
+	while (1 === 1) {
+		generateBoard(width, height);
+		if (board[x][y] !== 0)
+			continue;
+		if (guessingRequired === 'maybe')
+			break;
+		revealSquare(x, y);
+		revealAllForced();
+		if (guessingRequired === 'always' && !gameWon())
+			break;
+		if (guessingRequired === 'never' && gameWon())
+			break;
+	}
+	for (var i = 0; i < width; i++)
+		for (var a = 0; a < height; a++)
+			visiboard[i][a] = -2;
 }
 
 function generateBoard(width, height) {
@@ -264,8 +308,7 @@ boardui.addEventListener('mousedown', function (e) {
 	var move = getMove(e.pageX - boardui.offsetLeft,
 		e.pageY - wrapperTop - boardui.offsetTop);
 	if (!gameStarted) {
-		while (board[move[0]][move[1]] !== 0)
-			generateBoard(dimensions[0], dimensions[1]);
+		generateValidBoard(dimensions[0], dimensions[1], move[0], move[1]);
 		gameStarted = true;
 	}
 	if (visiboard[move[0]][move[1]] === -2) {
@@ -334,13 +377,54 @@ if (getElemId('save'))
 	});
 
 function getNewSettings() {
-	return {
-		'dimensions': [getInputValue('board-width'), getInputValue('board-height')],
-		'mineFrequency': getInputValue('mine-frequency'),
+	var settings = {
+		'difficulty': getInputValue('difficulty'),
+	};
+
+	switch (settings['difficulty']) {
+		case 'custom':
+			settings['dimensions'] =
+				[getInputValue('board-width'), getInputValue('board-height')];
+			settings['mineFrequency'] = getInputValue('mine-frequency');
+			guessingRequired = 'maybe';
+			break;
+		case 'easier':
+			settings['dimensions'] = [10, 5];
+			settings['mineFrequency'] = 0.2;
+			guessingRequired = 'never';
+			break;
+		case 'easy':
+			settings['dimensions'] = [15, 8];
+			settings['mineFrequency'] = 0.1;
+			guessingRequired = 'never';
+			break;
+		case 'normal':
+			settings['dimensions'] = [30, 15];
+			settings['mineFrequency'] = 0.1;
+			guessingRequired = 'never';
+			break;
+		case 'hard':
+			settings['dimensions'] = [40, 20];
+			settings['mineFrequency'] = 0.2;
+			guessingRequired = 'never';
+			break;
+		case 'very hard':
+			settings['dimensions'] = [50, 25];
+			settings['mineFrequency'] = 0.2;
+			guessingRequired = 'maybe';
+			break;
+		case 'good luck':
+			settings['dimensions'] = [60, 30];
+			settings['mineFrequency'] = 0.2;
+			guessingRequired = 'always';
+			break;
 	}
+
+	return settings;
 }
 
 function populateSettingsForm(settings) {
+	setInputValue('difficulty', difficulty);
 	setInputValue('board-width', dimensions[0]);
 	setInputValue('board-height', dimensions[1]);
 	setInputValue('mine-frequency', mineFrequency);
