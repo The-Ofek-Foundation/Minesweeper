@@ -141,8 +141,10 @@ function drawBoard() {
 function forcedMines(x, y) {
 	var adjacentMines = visiboard[x][y];
 	if (adjacentMines > 0) {
-		var adjacentUnkown = countAdjacentItems(visiboard, x, y, -2);
-		var adjacentFlags = countAdjacentItems(visiboard, x, y, -3);
+		var adjacentUnkown = countAdjacentItems(visiboard, x, y, -2) +
+			countAdjacentItems(visiboard, x, y, -4);
+		var adjacentFlags = countAdjacentItems(visiboard, x, y, -3) +
+			countAdjacentItems(visiboard, x, y, -5);
 		if (adjacentMines - adjacentFlags === adjacentUnkown && adjacentUnkown > 0)
 			return true;
 	}
@@ -152,57 +154,78 @@ function forcedMines(x, y) {
 function forcedReveal(x, y) {
 	var adjacentMines = visiboard[x][y];
 	if (adjacentMines > 0) {
-		var adjacentUnkown = countAdjacentItems(visiboard, x, y, -2);
-		var adjacentFlags = countAdjacentItems(visiboard, x, y, -3);
+		var adjacentUnkown = countAdjacentItems(visiboard, x, y, -2) +
+			countAdjacentItems(visiboard, x, y, -4);
+		var adjacentFlags = countAdjacentItems(visiboard, x, y, -3) +
+			countAdjacentItems(visiboard, x, y, -5);
 		if (adjacentMines === adjacentFlags && adjacentUnkown > 0)
 			return true;
 	}
 	return false;
 }
 
-function flagForcedMines() {
+function flagForcedMines(guess=false) {
 	var somethingChanged = false;
 	for (var i = 0; i < visiboard.length; i++)
 		for (var a = 0; a < visiboard.length; a++)
 			if (forcedMines(i, a)) {
-				flagAdjacentUnknown(i, a);
+				flagAdjacentUnknown(i, a, guess);
 				somethingChanged = true;
 			}
 	return somethingChanged;
 }
 
-function revealForcedReveals() {
+function revealForcedReveals(guess=false) {
 	var somethingChanged = false;
 	for (var i = 0; i < visiboard.length; i++)
 		for (var a = 0; a < visiboard.length; a++)
 			if (forcedReveal(i, a)) {
-				revealAdjacentUnknown(i, a);
+				revealAdjacentUnknown(i, a, guess);
 				somethingChanged = true;
 			}
 	return somethingChanged;
 }
 
-function flagAdjacentUnknown(x, y) {
+// function guessReveal() {
+// 	revealAllForced(false);
+// 	for (var delta = 2; delta < 100; delta++)
+// 		for (var i = 0; i < visiboard.length; i++)
+// 			for (var a = 0; a < visiboard[i].length; a++) {
+// 				var possibleCombinations =
+// 					choose(countAdjacentItems(visiboard, x, y, -2) +
+// 					countAdjacentItems(visiboard, x, y, -4), visiboard[i][a] -
+// 					countAdjacentItems(visiboard, x, y, -3) -
+// 					countAdjacentItems(visiboard, x, y, -5));
+// 				if (possibleCombinations === delta)
+// 					for (var g = 0; g < possibleCombinations; g++)
+// 						guessRevealSquare(i, a, g);
+// 			}
+
+// }
+
+function flagAdjacentUnknown(x, y, guess) {
 	for (var i = x > 0 ? x - 1:x; i < visiboard.length && i <= x + 1; i++)
 		for (var a = y > 0 ? y - 1:y; a < visiboard[i].length && a <= y + 1; a++)
 			if (visiboard[i][a] === -2)
-				visiboard[i][a] = -3;
+				visiboard[i][a] = guess ? -5:-3;
 }
 
-function revealAdjacentUnknown(x, y) {
+function revealAdjacentUnknown(x, y, guess) {
 	for (var i = x > 0 ? x - 1:x; i < visiboard.length && i <= x + 1; i++)
 		for (var a = y > 0 ? y - 1:y; a < visiboard[i].length && a <= y + 1; a++)
 			if (visiboard[i][a] === -2)
-				revealSquare(i, a);
+				if (guess)
+					visiboard[i][a] = -4;
+				else revealSquare(i, a);
 }
 
-function revealAllForced() {
+function revealAllForced(guess=false) {
 	var somethingChanged = true;
 	while (somethingChanged) {
 		somethingChanged = false;
-		if (flagForcedMines())
+		if (flagForcedMines(guess))
 			somethingChanged = true;
-		if (revealForcedReveals())
+		if (revealForcedReveals(guess))
 			somethingChanged = true;
 	}
 }
@@ -438,4 +461,9 @@ function populateSettingsForm(settings) {
 	setInputValue('board-width', dimensions[0]);
 	setInputValue('board-height', dimensions[1]);
 	setInputValue('mine-frequency', mineFrequency);
+}
+
+var fact = [1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880];
+function choose(n, r) {
+	return fact[n] / (fact[r] * fact[n - r]);
 }
