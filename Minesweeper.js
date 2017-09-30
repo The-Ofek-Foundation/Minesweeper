@@ -16,7 +16,7 @@ var mineQuestion = getElemId('mine-question');
 
 function pageReady() {
 	newGame();
-	setTimeout(resizeGameSettingsTable, 0);
+	setTimeout(resizeSettingsTable, 0);
 
 	setTimeout(function() {
 		var explainSettings = getSessionData('settingsExplainedMinesweeper');
@@ -28,7 +28,7 @@ function pageReady() {
 }
 
 function onResize() {
-	resizeGameSettingsTable();
+	resizeSettingsTable();
 	resizeBoard();
 	drawBoard();
 }
