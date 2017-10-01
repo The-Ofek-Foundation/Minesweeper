@@ -380,35 +380,6 @@ document.addEventListener('keypress', function (event) {
 	}
 });
 
-getElemId('new-game-button').addEventListener('click', function () {
-	newGame();
-});
-
-getElemId('settings-button').addEventListener('click', function () {
-	showSettingsForm();
-});
-
-getElemId('done').addEventListener('click', function (event) {
-	var settings = getNewSettings();
-	gameSettings.setSettings(settings);
-	hideSettingsForm();
-	newGame();
-});
-
-getElemId('cancel').addEventListener('click', function (event) {
-	hideSettingsForm();
-	populateSettingsForm(gameSettings.getSettings());
-});
-
-if (getElemId('save'))
-	getElemId('save').addEventListener('click', function (event) {
-		var settings = getNewSettings();
-		gameSettings.setSettings(settings);
-		gameSettings.saveSettings(settings);
-		hideSettingsForm();
-		newGame();
-	});
-
 function getNewSettings() {
 	var settings = {
 		'difficulty': getInputValue('difficulty'),
